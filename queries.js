@@ -6,7 +6,8 @@ var options = {
 };
 
 var pgp = require('pg-promise')(options);
-var connectionString = 'postgres://localhost:5432/puppies';
+//var connectionString = 'postgres://localhost:5432/puppies';
+var connectionString = 'postgres://rdythibocmspfq:28d97c027abdd748c1b93c11b7063de6ff4106acd6fa3d6df24559913283f536@ec2-54-247-101-191.eu-west-1.compute.amazonaws.com:5432/d8qspi9bf1ncj3';
 var db = pgp(connectionString);
 
 function getAllPuppies(req, res, next) {
