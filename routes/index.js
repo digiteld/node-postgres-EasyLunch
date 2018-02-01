@@ -4,6 +4,7 @@ var db = require('../queries');
 
 
 router.get('/api/puppies', db.getAllPuppies);
+router.get('/api/restaurants', db.getAllRestaurants);
 router.get('/api/puppies/:id', db.getSinglePuppy);
 router.post('/api/puppies', db.createPuppy);
 router.put('/api/puppies/:id', db.updatePuppy);

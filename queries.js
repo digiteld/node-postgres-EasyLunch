@@ -25,6 +25,21 @@ function getAllPuppies(req, res, next) {
     });
 }
 
+function getAllRestaurants(req, res, next) {
+  db.any('select * from restaurants')
+    .then(function (data) {
+      res.status(200)
+        .json({
+          status: 'success',
+          data: data,
+          message: 'Retrieved ALL restaurants'
+        });
+    })
+    .catch(function (err) {
+      return next(err);
+    });
+}
+
 function getSinglePuppy(req, res, next) {
   var pupID = parseInt(req.params.id);
   db.one('select * from pups where id = $1', pupID)
@@ -94,6 +109,7 @@ function removePuppy(req, res, next) {
 
 module.exports = {
   getAllPuppies: getAllPuppies,
+  getAllRestaurants: getAllRestaurants,
   getSinglePuppy: getSinglePuppy,
   createPuppy: createPuppy,
   updatePuppy: updatePuppy,
