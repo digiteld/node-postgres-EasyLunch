@@ -30,8 +30,8 @@ function getAllBookings(req, res, next) {
 }
 
 function getSingleBooking(req, res, next) {
-  var bookingID = parseInt(req.params.id);
-  db.one('select * from booking where id = $1', bookingID)
+    const bookingID = parseInt(req.params.id);
+    db.one('select * from booking where id = $1', bookingID)
   .then(function (data) {
     res.status(200)
     .json({
@@ -78,8 +78,8 @@ function updateBooking(req, res, next) {
 }
 
 function removeBooking(req, res, next) {
-  var commandID = parseInt(req.params.id);
-  db.result('delete from booking where id = $1', commandID)
+    const commandID = parseInt(req.params.id);
+    db.result('delete from booking where id = $1', commandID)
   .then(function (result) {
     /* jshint ignore:start */
     res.status(200)
@@ -114,8 +114,8 @@ function getAllCommands(req, res, next) {
 }
 
 function getSingleCommand(req, res, next) {
-  var commandID = parseInt(req.params.id);
-  db.one('select * from command where id = $1', commandID)
+    const commandID = parseInt(req.params.id);
+    db.one('select * from command where id = $1', commandID)
   .then(function (data) {
     res.status(200)
     .json({
@@ -163,8 +163,8 @@ function updateCommand(req, res, next) {
 }
 
 function removeCommand(req, res, next) {
-  var commandID = parseInt(req.params.id);
-  db.result('delete from command where id = $1', commandID)
+    const commandID = parseInt(req.params.id);
+    db.result('delete from command where id = $1', commandID)
   .then(function (result) {
     /* jshint ignore:start */
     res.status(200)
@@ -200,8 +200,8 @@ function getAllMeals(req, res, next) {
 }
 
 function getSingleMeal(req, res, next) {
-  var mealID = parseInt(req.params.id);
-  db.one('select * from meals where id = $1', mealID)
+    const mealID = parseInt(req.params.id);
+    db.one('select * from meals where id = $1', mealID)
   .then(function (data) {
     res.status(200)
     .json({
@@ -248,8 +248,8 @@ function updateMeal(req, res, next) {
 }
 
 function removeMeal(req, res, next) {
-  var mealID = parseInt(req.params.id);
-  db.result('delete from meals where id = $1', mealID)
+    const mealID = parseInt(req.params.id);
+    db.result('delete from meals where id = $1', mealID)
   .then(function (result) {
     /* jshint ignore:start */
     res.status(200)
@@ -282,8 +282,8 @@ function getAllPayments(req, res, next) {
 }
 
 function getSinglePayment(req, res, next) {
-  var paymentID = parseInt(req.params.id);
-  db.one('select * from payment where id = $1', paymentID)
+    const paymentID = parseInt(req.params.id);
+    db.one('select * from payment where id = $1', paymentID)
   .then(function (data) {
     res.status(200)
     .json({
@@ -330,8 +330,8 @@ function updatePayment(req, res, next) {
 }
 
 function removePayment(req, res, next) {
-  var paymentID = parseInt(req.params.id);
-  db.result('delete from payment where id = $1', paymentID)
+    const paymentID = parseInt(req.params.id);
+    db.result('delete from payment where id = $1', paymentID)
   .then(function (result) {
     /* jshint ignore:start */
     res.status(200)
@@ -364,8 +364,8 @@ function getAllRestaurants(req, res, next) {
 }
 
 function getSingleRestaurant(req, res, next) {
-  var restaurantID = parseInt(req.params.id);
-  db.one('select * from restaurants where id = $1', restaurantID)
+    const restaurantID = parseInt(req.params.id);
+    db.one('select * from restaurants where id = $1', restaurantID)
   .then(function (data) {
     res.status(200)
     .json({
@@ -414,8 +414,8 @@ function updateRestaurant(req, res, next) {
 }
 
 function removeRestaurant(req, res, next) {
-  var restaurantID = parseInt(req.params.id);
-  db.result('delete from restaurants where id = $1', restaurantID)
+    const restaurantID = parseInt(req.params.id);
+    db.result('delete from restaurants where id = $1', restaurantID)
   .then(function (result) {
     /* jshint ignore:start */
     res.status(200)
@@ -448,8 +448,8 @@ function getAllPuppies(req, res, next) {
 }
 
 function getSinglePuppy(req, res, next) {
-  var pupID = parseInt(req.params.id);
-  db.one('select * from pups where id = $1', pupID)
+    const pupID = parseInt(req.params.id);
+    db.one('select * from pups where id = $1', pupID)
   .then(function (data) {
     res.status(200)
     .json({
@@ -497,8 +497,8 @@ function updatePuppy(req, res, next) {
   }
 
   function removePuppy(req, res, next) {
-    var pupID = parseInt(req.params.id);
-    db.result('delete from pups where id = $1', pupID)
+      const pupID = parseInt(req.params.id);
+      db.result('delete from pups where id = $1', pupID)
     .then(function (result) {
       /* jshint ignore:start */
       res.status(200)
