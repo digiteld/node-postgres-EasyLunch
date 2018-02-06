@@ -64,7 +64,7 @@ function createBooking(req, res, next) {
 
 function updateBooking(req, res, next) {
   db.none('update booking set master_user_id=$1, restaurantID=$2, nb_users=$3, schedule=$4, created_date=$5, updated_date=$6 where id=$7',
-  [req.body.master_user_id, req.body.restaurantID, req.body.nb_users, req.body.schedule, req.body.created_date, req.body.updated_date])
+  [req.body.master_user_id, req.body.restaurantID, req.body.nb_users, req.body.schedule, req.body.created_date, req.body.updated_date,req.params.id])
   .then(function () {
     res.status(200)
     .json({
@@ -79,13 +79,13 @@ function updateBooking(req, res, next) {
 
 function removeBooking(req, res, next) {
   var commandID = parseInt(req.params.id);
-  db.result('delete from command where id = $1', commandID)
+  db.result('delete from booking where id = $1', commandID)
   .then(function (result) {
     /* jshint ignore:start */
     res.status(200)
     .json({
       status: 'success',
-      message: `Removed ${result.rowCount} command`
+      message: `Removed ${result.rowCount} booking`
     });
     /* jshint ignore:end */
   })
@@ -142,13 +142,14 @@ function createCommand(req, res, next) {
     });
   })
   .catch(function (err) {
+    console.log("Err on create command --> "+err);
     return next(err);
   });
 }
 
 function updateCommand(req, res, next) {
   db.none('update command set user_id=$1, booking_id=$2, meal_id=$3, payment_id=$4, created_date=$5, updated_date=$6 where id=$7',
-  [req.body.user_id, req.body.booking_id, req.body.meal_id, req.body.payment_id, req.body.created_date, req.body.updated_date])
+  [req.body.user_id, req.body.booking_id, req.body.meal_id, req.body.payment_id, req.body.created_date, req.body.updated_date,req.params.id])
   .then(function () {
     res.status(200)
     .json({
@@ -233,7 +234,7 @@ function createMeal(req, res, next) {
 
 function updateMeal(req, res, next) {
   db.none('update meals set restaurant_id=$1, name=$2, description=$3, price=$4, created_date=$5, updated_date=$6 where id=$7',
-  [req.body.restaurant_id, req.body.name, req.body.description, req.body.price, req.body.created_date, req.body.updated_date])
+  [req.body.restaurant_id, req.body.name, req.body.description, req.body.price, req.body.created_date, req.body.updated_date,req.params.id])
   .then(function () {
     res.status(200)
     .json({
@@ -315,7 +316,7 @@ function createPayment(req, res, next) {
 
 function updatePayment(req, res, next) {
   db.none('update payment set amount=$1, command_id=$2, status=$3, user_id=$4, created_date=$5, updated_date=$6, stripe_id=$7 where id=$8',
-  [req.body.amount, req.body.command_id, req.body.status, req.body.user_id, req.body.created_date, req.body.updated_date, req.body.stripe_id])
+  [req.body.amount, req.body.command_id, req.body.status, req.body.user_id, req.body.created_date, req.body.updated_date, req.body.stripe_id,req.params.id])
   .then(function () {
     res.status(200)
     .json({
@@ -391,13 +392,14 @@ function createRestaurant(req, res, next) {
     });
   })
   .catch(function (err) {
+    console.log("Err create Restaurant --> "+err);
     return next(err);
   });
 }
 
 function updateRestaurant(req, res, next) {
   db.none('update restaurants set name=$1, description=$2, lat=$3, lon=$4, address=$5, schedule=$6, person_capacity=$7, created_date=$8, location=$9, picture=$10 where id=$11',
-  [req.body.name, req.body.description, req.body.lat, req.body.lon, req.body.address, req.body.schedule, req.body.person_capacity, req.body.created_date, req.body.location, req.body.picture])
+  [req.body.name, req.body.description, req.body.lat, req.body.lon, req.body.address, req.body.schedule, req.body.person_capacity, req.body.created_date, req.body.location, req.body.picture, req.params.id])
   .then(function () {
     res.status(200)
     .json({
@@ -406,6 +408,7 @@ function updateRestaurant(req, res, next) {
     });
   })
   .catch(function (err) {
+    console.log("ERR update restaurant --> "+err);
     return next(err);
   });
 }
