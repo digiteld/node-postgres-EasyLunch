@@ -349,18 +349,50 @@ function removePayment(req, res, next) {
 // RESTAURANTS
 
 function getAllRestaurants(req, res, next) {
-  db.any('select * from restaurants')
-  .then(function (data) {
-    res.status(200)
-    .json({
-      status: 'success',
-      data: data,
-      message: 'Retrieved ALL restaurants'
-    });
-  })
-  .catch(function (err) {
-    return next(err);
-  });
+
+    console.log("req --> "+req.query);
+
+  if(req.query.lat==null) {
+      db.any('select * from restaurants')
+          .then(function (data) {
+              res.status(200)
+                  .json({
+                      status: 'success',
+                      data: data,
+                      message: 'Retrieved ALL restaurants'
+                  });
+          })
+          .catch(function (err) {
+              return next(err);
+          });
+  }
+  else
+  {
+
+    // exemple request localhost:5000/api/restaurants?lat=44.864689&lon=-0.533843&meter=1024
+
+    var lat=req.query.lat;
+    var long=req.query.lon;
+    var meter=req.query.meter;
+
+
+    console.log("lat "+lat+" long "+long+"  meter "+meter);
+
+      db.any('SELECT * FROM restaurants WHERE ST_DWithin(Geography(geom),Geography(ST_MakePoint($1, $2)), $3);',[long,lat,meter])
+          .then(function (data) {
+              res.status(200)
+                  .json({
+                      status: 'success',
+                      data: data,
+                      message: 'Retrieved ALL restaurants'
+                  });
+          })
+          .catch(function (err) {
+            console.log("Err in return restaurants in distance --> "+err);
+              return next(err);
+          });
+  }
+
 }
 
 function getSingleRestaurant(req, res, next) {

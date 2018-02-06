@@ -15,6 +15,8 @@ router.post('/api/restaurants', db.createRestaurant);
 router.put('/api/restaurants/:id', db.updateRestaurant);
 router.delete('/api/restaurants/:id', db.removeRestaurant);
 
+
+
 router.get('/api/booking', db.getAllBookings);
 router.get('/api/booking/:id', db.getSingleBooking);
 router.post('/api/booking', db.createBooking);
