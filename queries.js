@@ -413,8 +413,8 @@ function getSingleRestaurant(req, res, next) {
 
 function createRestaurant(req, res, next) {
 
-  db.none('insert into restaurants(name, description, lat, lon, address, schedule, person_capacity, created_date, location, picture)' +
-  'values(${name}, ${description}, ${lat}, ${lon}, ${address}, ${schedule}, ${person_capacity}, ${created_date}, ${location}, ${picture})',
+  db.none('insert into restaurants(name, description, lat, lon, address, schedule, person_capacity, created_date, location, picture, geom)' +
+  'values(${name}, ${description}, ${lat}, ${lon}, ${address}, ${schedule}, ${person_capacity}, ${created_date}, ${location}, ${picture},ST_SetSRID(ST_MakePoint(${lon},${lat}),4326))',
   req.body)
   .then(function () {
     res.status(200)
@@ -430,7 +430,7 @@ function createRestaurant(req, res, next) {
 }
 
 function updateRestaurant(req, res, next) {
-  db.none('update restaurants set name=$1, description=$2, lat=$3, lon=$4, address=$5, schedule=$6, person_capacity=$7, created_date=$8, location=$9, picture=$10 where id=$11',
+  db.none('update restaurants set name=$1, description=$2, lat=$3, lon=$4, address=$5, schedule=$6, person_capacity=$7, created_date=$8, location=$9, picture=$10, geom=ST_SetSRID(ST_MakePoint($4,$3),4326))where id=$11',
   [req.body.name, req.body.description, req.body.lat, req.body.lon, req.body.address, req.body.schedule, req.body.person_capacity, req.body.created_date, req.body.location, req.body.picture, req.params.id])
   .then(function () {
     res.status(200)
