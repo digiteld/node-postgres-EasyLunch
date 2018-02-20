@@ -34,6 +34,7 @@ router.post('/api/payment', db.createPayment);
 router.put('/api/payment/:id', db.updatePayment);
 router.delete('/api/payment/:id', db.removePayment);
 
+
 // application -------------------------------------------------------------
 router.get('/', function (req, res) {
 

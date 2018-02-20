@@ -6,7 +6,7 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const pug = require('pug');
 const routes = require('./routes/index');
-var oauthserver = require('oauth2-server');
+
 
 
 const app = express();
