@@ -53,7 +53,7 @@ function getAllBookings(req, res, next) {
                     bookingID.push(command.id)
                     mealID.push((command.meal_id).toString())
                     nbUser.push(command.nb_users);
-                    schedule.push(((command.schedule).toString()).substr(0, 2)+'h'+((command.schedule).toString()).substr(2));
+                    schedule.push(((command.schedule).toString()).substr(0, 2) + 'h' + ((command.schedule).toString()).substr(2));
                 }
 
                 mealRequired = mealRequired.concat(command.meal_id)
@@ -62,7 +62,7 @@ function getAllBookings(req, res, next) {
             })
 
 
-            db.any('select name,plat,id from meals where id = ANY(\'{ ' + mealRequired + ' }\') ')
+            db.any('select name,plat,id,price from meals where id = ANY(\'{ ' + mealRequired + ' }\') ')
                 .then(function (dataMeal) {
 
 
@@ -70,7 +70,7 @@ function getAllBookings(req, res, next) {
                         var entree = [];
                         var plat = [];
                         var dessert = []
-
+                        var price = 0;
                         var arrayOfMealID = []
 
                         console.log("MEAL ID --> " + mealID[i])
@@ -81,19 +81,28 @@ function getAllBookings(req, res, next) {
                             dataMeal.map(m => {
 
                                 if (m.id == id) {
+                                    price += m.price;
                                     switch (m.plat) {
-                                        case 0:
+                                        case 0: {
+
+
                                             entree.push(m.name);
+
                                             break;
-                                        case 1:
+                                        }
+                                        case 1: {
+
                                             plat.push(m.name);
+
                                             break;
-                                        case 2:
+                                        }
+                                        case 2: {
+
                                             dessert.push(m.name);
+
                                             break;
-                                        default:
-                                            console.log("J'ai rien trouvé GROS")
-                                            break;
+                                        }
+
 
                                     }
                                 }
@@ -108,15 +117,15 @@ function getAllBookings(req, res, next) {
                             "schedule": schedule[i],
                             "entree": entree,
                             "plat": plat,
-                            "dessert": dessert
+                            "dessert": dessert,
+                            "price": price
                         })
+                        console.log("ENTREE : " + entree)
+                        console.log("PLAT : " + plat)
+                        console.log("DESSSERT : " + dessert)
 
-                        console.log(entree)
-                        console.log(plat)
-                        console.log(dessert)
 
                     }
-
 
 
                     res.status(200)
@@ -157,19 +166,48 @@ function getSingleBooking(req, res, next) {
 
 function createBooking(req, res, next) {
 
-    db.none('insert into booking(master_user_id, restaurant_id, nb_users, schedule, created_date, updated_date)' +
-        'values(${master_user_id}, ${restaurant_id}, ${nb_users}, ${schedule}, ${created_date}, ${updated_date})',
-        req.body)
-        .then(function () {
-            res.status(200)
-                .json({
-                    status: 'success',
-                    message: 'Inserted one booking'
-                });
-        })
-        .catch(function (err) {
-            return next(err);
-        });
+
+    db.one('select * from code WHERE free=true limit 1').then(result => {
+
+        res.status(200)
+
+            .json({
+                status: 'success',
+                data: result.name,
+                message: 'Inserted one booking'
+            });
+
+        insertBookingWithCode(result.id)
+
+
+        db.none('UPDATE code SET free=false WHERE id=$1;', result.id)
+
+    }) .catch(function (err) {
+        console.error("ERROR IN SELECT CODE "+err)
+    });
+
+
+    function insertBookingWithCode(idCode) {
+        db.one('insert into booking(master_user_id, restaurant_id, nb_users, schedule, created_date, updated_date, code)' +
+            'values($1, $2, $3, $4, $5, $6,$7) RETURNING booking.id ',
+            [req.body.master_user_id, req.body.restaurant_id,  req.body.nb_users,  req.body.schedule,  req.body.created_date,  req.body.update_date, idCode])
+            .then(function (result) {
+                db.none('insert into command(user_id, booking_id, meal_id, payment_id, created_date, updated_date)' +
+                    'values($1,$2,$3,$4,$5,$6)',[req.body.user_id, result.id, req.body.meal_id, 2,null,null]
+                    ).then(()=>{
+                    console.log("Normalement tout est good")
+                })
+
+                    .catch(function (err) {
+                        console.log("Err on create command --> " + err);
+                        return next(err);
+                    });
+            }).catch(function (err) {
+                console.error("ERROR IN CREATE BOOKING" + err)
+            });
+    }
+
+
 }
 
 function updateBooking(req, res, next) {
@@ -324,8 +362,8 @@ function getSingleMeal(req, res, next) {
 
 function createMeal(req, res, next) {
 
-    db.none('insert into meals(restaurant_id, name, description, price, created_date, updated_date)' +
-        'values(${restaurant_id}, ${name}, ${description}, ${price}, ${created_date}, ${updated_date})',
+    db.none('insert into meals(restaurant_id, name, description, price, created_date, updated_date, plat)' +
+        'values(${restaurant_id}, ${name}, ${description}, ${price}, ${created_date}, ${updated_date}, $(plat))',
         req.body)
         .then(function () {
             res.status(200)
@@ -340,8 +378,8 @@ function createMeal(req, res, next) {
 }
 
 function updateMeal(req, res, next) {
-    db.none('update meals set restaurant_id=$1, name=$2, description=$3, price=$4, created_date=$5, updated_date=$6 where id=$7',
-        [req.body.restaurant_id, req.body.name, req.body.description, req.body.price, req.body.created_date, req.body.updated_date, req.params.id])
+    db.none('update meals set restaurant_id=$1, name=$2, description=$3, price=$4, created_date=$5, updated_date=$6, plat=$8 where id=$7',
+        [req.body.restaurant_id, req.body.name, req.body.description, req.body.price, req.body.created_date, req.body.updated_date, req.params.id, req.body.plat])
         .then(function () {
             res.status(200)
                 .json({
@@ -484,7 +522,7 @@ function getAllRestaurants(req, res, next) {
 
         console.log("lat " + lat + " long " + long + "  meter " + meter);
 
-        db.any('SELECT * FROM restaurants WHERE ST_DWithin(Geography(geom),Geography(ST_MakePoint($1, $2)), $3);', [long, lat, meter])
+        db.any('SELECT * FROM restaurants WHERE ST_DWithin(Geography(geom),Geography(ST_MakePoint($1, $2)), $3) ORDER BY ST_Distance(Geography(geom),Geography(ST_MakePoint($1, $2))) ;', [long, lat, meter])
             .then(function (data) {
                 res.status(200)
                     .json({
