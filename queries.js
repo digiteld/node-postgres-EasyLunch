@@ -330,8 +330,10 @@ function removeCommand(req, res, next) {
 // MEALS
 
 function getAllMeals(req, res, next) {
-    db.any('select * from meals')
+    db.any('select meals.id,name,description,price,plat from meals where restaurant_id=$1',req.query.id)
         .then(function (data) {
+
+
             res.status(200)
                 .json({
                     status: 'success',
