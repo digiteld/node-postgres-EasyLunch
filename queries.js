@@ -169,6 +169,7 @@ function createBooking(req, res, next) {
 
     db.one('select * from code WHERE free=true limit 1').then(result => {
 
+        console.log(result)
         res.status(200)
 
             .json({
@@ -193,7 +194,7 @@ function createBooking(req, res, next) {
             [req.body.master_user_id, req.body.restaurant_id,  req.body.nb_users,  req.body.schedule,  req.body.created_date,  req.body.update_date, idCode])
             .then(function (result) {
                 db.none('insert into command(user_id, booking_id, meal_id, payment_id, created_date, updated_date)' +
-                    'values($1,$2,$3,$4,$5,$6)',[req.body.user_id, result.id, req.body.meal_id, 2,null,null]
+                    'values($1,$2,$3,$4,$5,$6)',[req.body.master_user_id, result.id, req.body.meal_id, 2,null,null]
                     ).then(()=>{
                     console.log("Normalement tout est good")
                 })
