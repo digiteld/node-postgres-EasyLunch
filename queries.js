@@ -183,19 +183,19 @@ function createBooking(req, res, next) {
 
         db.none('UPDATE code SET free=false WHERE id=$1;', result.id)
 
-    }) .catch(function (err) {
-        console.error("ERROR IN SELECT CODE "+err)
+    }).catch(function (err) {
+        console.error("ERROR IN SELECT CODE " + err)
     });
 
 
     function insertBookingWithCode(idCode) {
         db.one('insert into booking(master_user_id, restaurant_id, nb_users, schedule, created_date, updated_date, code)' +
             'values($1, $2, $3, $4, $5, $6,$7) RETURNING booking.id ',
-            [req.body.master_user_id, req.body.restaurant_id,  req.body.nb_users,  req.body.schedule,  req.body.created_date,  req.body.update_date, idCode])
+            [req.body.master_user_id, req.body.restaurant_id, req.body.nb_users, req.body.schedule, req.body.created_date, req.body.update_date, idCode])
             .then(function (result) {
                 db.none('insert into command(user_id, booking_id, meal_id, payment_id, created_date, updated_date)' +
-                    'values($1,$2,$3,$4,$5,$6)',[req.body.master_user_id, result.id, req.body.meal_id, 2,null,null]
-                    ).then(()=>{
+                    'values($1,$2,$3,$4,$5,$6)', [req.body.master_user_id, result.id, req.body.meal_id, 2, null, null]
+                ).then(() => {
                     console.log("Normalement tout est good")
                 })
 
@@ -204,8 +204,8 @@ function createBooking(req, res, next) {
                         return next(err);
                     });
             }).catch(function (err) {
-                console.error("ERROR IN CREATE BOOKING" + err)
-            });
+            console.error("ERROR IN CREATE BOOKING" + err)
+        });
     }
 
 
@@ -278,9 +278,12 @@ function getSingleCommand(req, res, next) {
 }
 
 function createCommand(req, res, next) {
+    console.log(req.body)
+    console.log(req.body.booking_id)
+    console.log("JE dois créer la commmand")
 
     db.none('insert into command(user_id, booking_id, meal_id, payment_id, created_date, updated_date)' +
-        'values(${user_id}, ${booking_id}, ${meal_id}, ${payment_id}, ${created_date}, ${updated_date})',
+        'values(${user_id}, ${booking_id}, ${meal_id}, ${payment_id}, null, null)',
         req.body)
         .then(function () {
             res.status(200)
@@ -331,7 +334,7 @@ function removeCommand(req, res, next) {
 // MEALS
 
 function getAllMeals(req, res, next) {
-    db.any('select meals.id,name,description,price,plat from meals where restaurant_id=$1',req.query.id)
+    db.any('select meals.id,name,description,price,plat from meals where restaurant_id=$1', req.query.id)
         .then(function (data) {
 
 
@@ -543,19 +546,50 @@ function getAllRestaurants(req, res, next) {
 }
 
 function getSingleRestaurant(req, res, next) {
-    const restaurantID = parseInt(req.params.id);
-    db.one('select * from restaurants where id = $1', restaurantID)
-        .then(function (data) {
-            res.status(200)
-                .json({
-                    status: 'success',
-                    data: data,
-                    message: 'Retrieved ONE restaurant'
-                });
-        })
-        .catch(function (err) {
-            return next(err);
-        });
+
+    if (parseInt(req.params.id) === Number.NaN) {
+
+
+        const restaurantID = parseInt(req.params.id);
+
+        db.one('select * from restaurants where id = $1', restaurantID)
+            .then(function (data) {
+                res.status(200)
+                    .json({
+                        status: 'success',
+                        data: data,
+                        message: 'Retrieved ONE restaurant'
+                    });
+            })
+            .catch(function (err) {
+                return next(err);
+            });
+    }
+
+    else {
+
+        db.one('SELECT booking.id,restaurant_id \n' +
+            'FROM booking \n' +
+            'INNER JOIN code ON booking.code=code.id\n' +
+            'WHERE code.free=false AND code.name=$1 ORDER BY booking.id DESC LIMIT 1', req.params.id)
+            .then(function (data) {
+                res.status(200)
+                    .json({
+                        status: 'success',
+                        data: data,
+
+                    });
+            })
+            .catch(function (err) {
+                console.log("ERR --> "+err.received)
+                res.status(200)
+                    .json({
+                        status: 'success',
+                        data: null,
+
+                    });
+            });
+    }
 }
 
 function createRestaurant(req, res, next) {
