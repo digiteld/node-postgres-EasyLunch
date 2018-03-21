@@ -321,8 +321,8 @@ function createCommand(req, res, next) {
     console.log(req.body.booking_id)
     console.log("JE dois créer la commmand")
 
-    db.none('insert into command(user_id, booking_id, meal_id, payment_id, created_date, updated_date)' +
-        'values(${user_id}, ${booking_id}, ${meal_id}, ${payment_id}, null, null)',
+    db.none('insert into command(user_id, booking_id, meal_id, payment_id, created_date, updated_date,price,menu)' +
+        'values(${user_id}, ${booking_id}, ${meal_id}, ${payment_id}, ${date}, null,${total},${menu})',
         req.body)
         .then(function () {
             res.status(200)
