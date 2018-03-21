@@ -31,6 +31,7 @@ function getAllBookings(req, res, next) {
     db.any('\n' +
         'SELECT command.meal_id, booking.id, booking.nb_users, booking.schedule\n' +
         'FROM command\n' +
+        'FROM command\n' +
         'JOIN booking\n' +
         'ON booking_id=booking.id\n' +
         'WHERE booking.restaurant_id=1'
@@ -166,6 +167,8 @@ function getSingleBooking(req, res, next) {
 
 function createBooking(req, res, next) {
 
+
+
     console.log("PRICE --> "+req.body.total)
     console.log("MENU --> "+req.body.menu)
 
@@ -190,6 +193,8 @@ function createBooking(req, res, next) {
         console.error("ERROR IN SELECT CODE " + err)
     });
 
+    console.log("MEAL ID -->"+ req.body.meal_id)
+
 
     function insertBookingWithCode(idCode) {
         db.one('insert into booking(master_user_id, restaurant_id, nb_users, schedule, created_date, updated_date, code)' +
@@ -204,7 +209,7 @@ function createBooking(req, res, next) {
 
                     .catch(function (err) {
                         console.log("Err on create command --> " + err);
-                        return next(err);
+
                     });
             }).catch(function (err) {
             console.error("ERROR IN CREATE BOOKING" + err)
@@ -265,7 +270,7 @@ function getAllCommands(req, res, next) {
             'WHERE command.user_id=$1 ORDER BY command.id DESC' , req.query.iduser)
 
             .then(function (data) {
-
+                console.log("DATA --> "+JSON.stringify(data))
                 res.status(200)
                     .json({
                         status: 'success',
@@ -610,9 +615,10 @@ function getAllRestaurants(req, res, next) {
 
 function getSingleRestaurant(req, res, next) {
 
-    if (parseInt(req.params.id) === Number.NaN) {
 
+    if (!isNaN(parseInt(req.params.id))) {
 
+        console.log("JE SUIS UN NOMBRE")
         const restaurantID = parseInt(req.params.id);
 
         db.one('select * from restaurants where id = $1', restaurantID)
@@ -623,9 +629,10 @@ function getSingleRestaurant(req, res, next) {
                         data: data,
                         message: 'Retrieved ONE restaurant'
                     });
+                console.log("JE retourne bien le bon bail")
             })
             .catch(function (err) {
-                return next(err);
+               console.log("ERROR iN GET SiGLE RESTO --> "+err)
             });
     }
 
