@@ -166,6 +166,9 @@ function getSingleBooking(req, res, next) {
 
 function createBooking(req, res, next) {
 
+    console.log("PRICE --> "+req.body.total)
+    console.log("MENU --> "+req.body.menu)
+
 
     db.one('select * from code WHERE free=true limit 1').then(result => {
 
@@ -193,8 +196,8 @@ function createBooking(req, res, next) {
             'values($1, $2, $3, $4, $5, $6,$7) RETURNING booking.id ',
             [req.body.master_user_id, req.body.restaurant_id, req.body.nb_users, req.body.schedule, req.body.created_date, req.body.update_date, idCode])
             .then(function (result) {
-                db.none('insert into command(user_id, booking_id, meal_id, payment_id, created_date, updated_date)' +
-                    'values($1,$2,$3,$4,$5,$6)', [req.body.master_user_id, result.id, req.body.meal_id, 2, null, null]
+                db.none('insert into command(user_id, booking_id, meal_id, payment_id, created_date, updated_date,price, menu)' +
+                    'values($1,$2,$3,$4,$5,$6,$7,$8)', [req.body.master_user_id, result.id, req.body.meal_id, 2, null, null,req.body.price,req.body.menu]
                 ).then(() => {
                     console.log("Normalement tout est good")
                 })
@@ -249,6 +252,7 @@ function removeBooking(req, res, next) {
 function getAllCommands(req, res, next) {
 
 
+
     if(req.query.iduser)
     {
         console.log("getAllCommand With Param")
@@ -259,6 +263,7 @@ function getAllCommands(req, res, next) {
             'INNER JOiN restaurants\n' +
             'ON booking.restaurant_id = restaurants.id\n' +
             'WHERE command.user_id=$1 ORDER BY command.id DESC' , req.query.iduser)
+
             .then(function (data) {
 
                 res.status(200)
@@ -269,6 +274,7 @@ function getAllCommands(req, res, next) {
                     });
             })
             .catch(function (err) {
+
                 console.log("ERR SQL IN GET ALL COMMAND wWITH PaRAM --> "+err);
             });
     }
@@ -362,20 +368,49 @@ function removeCommand(req, res, next) {
 // MEALS
 
 function getAllMeals(req, res, next) {
-    db.any('select meals.id,name,description,price,plat from meals where restaurant_id=$1', req.query.id)
+
+    let meals = [];
+    let menus = [];
+
+
+    db.any('select ' +
+        'meals.id,meals.name,meals.description,meals.price,meals.plat' +
+        ' from meals where meals.restaurant_id=$1 ORDER BY meals.id ASC', req.query.id)
         .then(function (data) {
 
+            meals = data
+            if (menus.length > 0)
+                sendResponse()
 
-            res.status(200)
-                .json({
-                    status: 'success',
-                    data: data,
-                    message: 'Retrieved ALL meals'
-                });
+
         })
         .catch(function (err) {
             return next(err);
         });
+
+    db.any('select *' +
+        ' from menu where id_restaurant=$1 ', req.query.id)
+        .then(function (data) {
+            menus=data
+            if (meals.length > 0)
+                sendResponse()
+
+        })
+        .catch(function (err) {
+            return next(err);
+        });
+
+    function sendResponse() {
+
+
+        res.status(200)
+            .json({
+                status: 'success',
+                data:[{menu: menus,meal:meals}],
+                message: 'Retrieved ALL meals'
+            });
+    }
+
 }
 
 function getSingleMeal(req, res, next) {
@@ -609,7 +644,7 @@ function getSingleRestaurant(req, res, next) {
                     });
             })
             .catch(function (err) {
-                console.log("ERR --> "+err.received)
+                console.log("ERR --> " + err.received)
                 res.status(200)
                     .json({
                         status: 'success',
