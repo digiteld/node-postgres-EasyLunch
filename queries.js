@@ -31,7 +31,6 @@ function getAllBookings(req, res, next) {
     db.any('\n' +
         'SELECT command.meal_id, booking.id, booking.nb_users, booking.schedule\n' +
         'FROM command\n' +
-        'FROM command\n' +
         'JOIN booking\n' +
         'ON booking_id=booking.id\n' +
         'WHERE booking.restaurant_id=1'
@@ -39,7 +38,7 @@ function getAllBookings(req, res, next) {
         .then(function (dataCommand) {
 
             dataCommand.map(command => {
-                console.log("COMMAND --> " + JSON.stringify(command))
+
                 if (bookingID.indexOf(command.id) != -1) {
 
                     var index = bookingID.indexOf(command.id);
@@ -270,7 +269,7 @@ function getAllCommands(req, res, next) {
             'WHERE command.user_id=$1 ORDER BY command.id DESC' , req.query.iduser)
 
             .then(function (data) {
-                console.log("DATA --> "+JSON.stringify(data))
+
                 res.status(200)
                     .json({
                         status: 'success',
