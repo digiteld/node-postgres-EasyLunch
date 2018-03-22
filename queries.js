@@ -259,29 +259,66 @@ function getAllCommands(req, res, next) {
 
     if(req.query.iduser)
     {
-        console.log("getAllCommand With Param")
-        db.any('SELECT command.price,command.id, booking.created_date, booking.nb_users, restaurants.name, restaurants.picture\n' +
+        // console.log("getAllCommand With Param")
+        // db.any('SELECT command.price,command.id, booking.created_date, booking.nb_users, restaurants.name, restaurants.picture\n' +
+        //     'FROM command\n' +
+        //     'INNER JOIN booking \n' +
+        //     'ON command.booking_id = booking.id\n' +
+        //     'INNER JOiN restaurants\n' +
+        //     'ON booking.restaurant_id = restaurants.id\n' +
+        //     'WHERE command.user_id=$1 ORDER BY command.id DESC' , req.query.iduser)
+
+        let restaurantID=[]
+
+        db.any('SELECT command.price,command.id, booking.created_date, booking.restaurant_id,booking.nb_users,booking.schedule, booking.created_date\n' +
             'FROM command\n' +
             'INNER JOIN booking \n' +
             'ON command.booking_id = booking.id\n' +
-            'INNER JOiN restaurants\n' +
-            'ON booking.restaurant_id = restaurants.id\n' +
             'WHERE command.user_id=$1 ORDER BY command.id DESC' , req.query.iduser)
 
             .then(function (data) {
 
-                res.status(200)
-                    .json({
-                        status: 'success',
-                        data: data,
-                        message: 'Retrieved ALL Commands for specific user'
+
+                data.map(command => {
+
+                    if (restaurantID.indexOf(command.restaurant_id) === -1)
+                        restaurantID.push(command.restaurant_id)
+
+                    db.any('SELECT restaurants.id,restaurants.name, restaurants.picture\n' +
+                        'FROM restaurants\n' +
+
+                        'WHERE restaurants.id=ANY(\'{$1}\') ', parseInt(req.query.iduser))
+
+                        .then(function (data2) {
+
+
+                            console.log("RESTO --> " + JSON.stringify(data2))
+
+                            res.status(200)
+                                .json({
+                                    status: 'success',
+                                    data: {
+                                        booking:data,
+                                        infoResto:data2
+                                    },
+                                    message: 'Retrieved ALL Commands for specific user'
+                                });
+
+                        }).catch(function (err) {
+
+                        console.log("ERR SQL IN GET ALL COMMAND wWITH PaRAM --> " + err);
+
                     });
+
+                })
+
             })
             .catch(function (err) {
 
                 console.log("ERR SQL IN GET ALL COMMAND wWITH PaRAM --> "+err);
             });
     }
+
     else
     {
     db.any('select * from command')
