@@ -198,10 +198,10 @@ function createBooking(req, res, next) {
     function insertBookingWithCode(idCode) {
         db.one('insert into booking(master_user_id, restaurant_id, nb_users, schedule, created_date, updated_date, code)' +
             'values($1, $2, $3, $4, $5, $6,$7) RETURNING booking.id ',
-            [req.body.master_user_id, req.body.restaurant_id, req.body.nb_users, req.body.schedule, req.body.created_date, req.body.update_date, idCode])
+            [req.body.master_user_id, req.body.restaurant_id, req.body.nb_users, req.body.schedule, req.body.date, req.body.update_date, idCode])
             .then(function (result) {
                 db.none('insert into command(user_id, booking_id, meal_id, payment_id, created_date, updated_date,price, menu)' +
-                    'values($1,$2,$3,$4,$5,$6,$7,$8)', [req.body.master_user_id, result.id, req.body.meal_id, 2, null, null,req.body.price,req.body.menu]
+                    'values($1,$2,$3,$4,$5,$6,$7,$8)', [req.body.master_user_id, result.id, req.body.meal_id, 2, req.body.date, null,req.body.total,req.body.menu]
                 ).then(() => {
                     console.log("Normalement tout est good")
                 })
@@ -259,18 +259,11 @@ function getAllCommands(req, res, next) {
 
     if(req.query.iduser)
     {
-        // console.log("getAllCommand With Param")
-        // db.any('SELECT command.price,command.id, booking.created_date, booking.nb_users, restaurants.name, restaurants.picture\n' +
-        //     'FROM command\n' +
-        //     'INNER JOIN booking \n' +
-        //     'ON command.booking_id = booking.id\n' +
-        //     'INNER JOiN restaurants\n' +
-        //     'ON booking.restaurant_id = restaurants.id\n' +
-        //     'WHERE command.user_id=$1 ORDER BY command.id DESC' , req.query.iduser)
+
 
         let restaurantID=[]
 
-        db.any('SELECT command.price,command.id, booking.created_date, booking.restaurant_id,booking.nb_users,booking.schedule, booking.created_date\n' +
+        db.any('SELECT command.price,command.id,command.meal_id,command.menu, booking.created_date, booking.id AS bookingid,booking.restaurant_id,booking.nb_users,booking.schedule, booking.created_date\n' +
             'FROM command\n' +
             'INNER JOIN booking \n' +
             'ON command.booking_id = booking.id\n' +
@@ -278,39 +271,44 @@ function getAllCommands(req, res, next) {
 
             .then(function (data) {
 
+                console.log("LA DATE IS HERE "+JSON.stringify(data))
+
 
                 data.map(command => {
 
                     if (restaurantID.indexOf(command.restaurant_id) === -1)
                         restaurantID.push(command.restaurant_id)
 
-                    db.any('SELECT restaurants.id,restaurants.name, restaurants.picture\n' +
-                        'FROM restaurants\n' +
 
-                        'WHERE restaurants.id=ANY(\'{$1}\') ', parseInt(req.query.iduser))
-
-                        .then(function (data2) {
-
-
-                            console.log("RESTO --> " + JSON.stringify(data2))
-
-                            res.status(200)
-                                .json({
-                                    status: 'success',
-                                    data: {
-                                        booking:data,
-                                        infoResto:data2
-                                    },
-                                    message: 'Retrieved ALL Commands for specific user'
-                                });
-
-                        }).catch(function (err) {
-
-                        console.log("ERR SQL IN GET ALL COMMAND wWITH PaRAM --> " + err);
-
-                    });
 
                 })
+
+                db.any('SELECT restaurants.id,restaurants.name, restaurants.description, restaurants.address,restaurants.picture\n' +
+                    'FROM restaurants\n' +
+
+                    'WHERE restaurants.id=ANY(\'{$1}\') ', parseInt(req.query.iduser))
+
+                    .then(function (data2) {
+
+
+
+
+                        res.status(200)
+                            .json({
+                                status: 'success',
+                                data: {
+                                    booking:data,
+                                    infoResto:data2
+                                },
+                                message: 'Retrieved ALL Commands for specific user'
+                            });
+
+                    }).catch(function (err) {
+
+
+                    console.log("ERR SQL IN GET ALL COMMAND wWITH PaRAM --> " + err);
+
+                });
 
             })
             .catch(function (err) {
@@ -674,7 +672,7 @@ function getSingleRestaurant(req, res, next) {
 
     else {
 
-        db.one('SELECT booking.id,restaurant_id \n' +
+        db.one('SELECT booking.id,restaurant_id,booking.schedule,booking.nb_users \n' +
             'FROM booking \n' +
             'INNER JOIN code ON booking.code=code.id\n' +
             'WHERE code.free=false AND code.name=$1 ORDER BY booking.id DESC LIMIT 1', req.params.id)
@@ -749,6 +747,42 @@ function removeRestaurant(req, res, next) {
         });
 }
 
+function getSingleCode(req,res,next)
+{
+    console.log(req.params.id)
+    console.log(req.query.booking)
+
+    //FIND CODE STRING WITH ID BOOKiNG
+
+    if(req.params.id && req.query.booking)
+    {
+        db.one('SELECT code.name ' +
+            'FROM CODE ' +
+            'INNER JOIN booking ' +
+            'ON code.id=booking.code  ' +
+            'WHERE booking.id=$1', req.params.id)
+            .then(function (data) {
+                res.status(200)
+                    .json({
+                        status: 'success',
+                        data: data,
+
+                    });
+            })
+            .catch(function (err) {
+                console.log("ERR --> " + err.received)
+                res.status(200)
+                    .json({
+                        status: 'success',
+                        data: null,
+
+                    });
+            });
+    }
+
+
+}
+
 
 module.exports = {
 
@@ -781,5 +815,6 @@ module.exports = {
     createPayment: createPayment,
     updatePayment: updatePayment,
     removePayment: removePayment,
+    getSingleCode: getSingleCode,
 
 };

@@ -35,6 +35,10 @@ router.put('/api/payment/:id', db.updatePayment);
 router.delete('/api/payment/:id', db.removePayment);
 
 
+router.get('/api/code/:id', db.getSingleCode);
+
+
+
 // application -------------------------------------------------------------
 router.get('/', function (req, res) {
 
