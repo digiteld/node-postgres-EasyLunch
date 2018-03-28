@@ -49,20 +49,30 @@ function getAllBookings(req, res, next) {
                 else {
                     console.log("JE CREE")
                     console.log("BECAUSE MAPBOOKING --> " + bookingID)
-
+                    console.log("DEBUG --> "+JSON.stringify(command))
+                    console.log("DEBUG 2 --> "+command.meal_id)
                     bookingID.push(command.id)
-                    mealID.push((command.meal_id).toString())
+                    if(command.meal_id!=null) {
+                        mealID.push((command.meal_id).toString())
+                    }
                     nbUser.push(command.nb_users);
                     schedule.push(((command.schedule).toString()).substr(0, 2) + 'h' + ((command.schedule).toString()).substr(2));
                 }
 
-                mealRequired = mealRequired.concat(command.meal_id)
+
+                console.log("DEBUG 3 --> "+mealRequired)
 
 
             })
+            mealRequired = mealRequired.concat(command.meal_id)
+
+            let mealRFormat=[...new Set(mealRequired)].sort()
+            mealRFormat.splice(mealRFormat.length-1,1)
+
+            console.log("MEAL FORMAT --> "+mealRFormat)
 
 
-            db.any('select name,plat,id,price from meals where id = ANY(\'{ ' + mealRequired + ' }\') ')
+            db.any('select name,plat,id,price from meals where id = ANY(\'{ ' + mealRFormat + ' }\') ')
                 .then(function (dataMeal) {
 
 
