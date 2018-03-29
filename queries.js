@@ -17,145 +17,124 @@ pgp.pg.defaults.ssl = true;
 
 function getAllBookings(req, res, next) {
 
-    var mealRequired = []
-
-    var bookingID = [];
-    var mealID = [];
-    var nbUser = [];
-    var schedule = [];
-
-
-    var json = []
-
+    var command = false
+    var plat = false
+    var menu = false
+    var _dataCommand
+    var _dataMeal
+    var _dataMenu
 
     db.any('\n' +
-        'SELECT command.meal_id, booking.id, booking.nb_users, booking.schedule\n' +
+        'SELECT command.meal_id,command.menu, booking.id, booking.nb_users, booking.schedule\n' +
         'FROM command\n' +
         'JOIN booking\n' +
         'ON booking_id=booking.id\n' +
-        'WHERE booking.restaurant_id=1'
+        'WHERE booking.restaurant_id=1 '
     )
         .then(function (dataCommand) {
-
-            dataCommand.map(command => {
-
-                if (bookingID.indexOf(command.id) != -1) {
-
-                    var index = bookingID.indexOf(command.id);
-                    mealID[index] = mealID + ',' + command.meal_id
-                    console.log("After Modif --> " + mealID[index])
-
-                }
-                else {
-                    console.log("JE CREE")
-                    console.log("BECAUSE MAPBOOKING --> " + bookingID)
-                    console.log("DEBUG --> "+JSON.stringify(command))
-                    console.log("DEBUG 2 --> "+command.meal_id)
-                    bookingID.push(command.id)
-                    if(command.meal_id!=null) {
-                        mealID.push((command.meal_id).toString())
-                    }
-                    nbUser.push(command.nb_users);
-                    schedule.push(((command.schedule).toString()).substr(0, 2) + 'h' + ((command.schedule).toString()).substr(2));
-                }
-
-
-                console.log("DEBUG 3 --> "+mealRequired)
-
-
-            })
-            mealRequired = mealRequired.concat(command.meal_id)
-
-            let mealRFormat=[...new Set(mealRequired)].sort()
-            mealRFormat.splice(mealRFormat.length-1,1)
-
-            console.log("MEAL FORMAT --> "+mealRFormat)
-
-
-            db.any('select name,plat,id,price from meals where id = ANY(\'{ ' + mealRFormat + ' }\') ')
-                .then(function (dataMeal) {
-
-
-                    for (var i = 0; i < bookingID.length; i++) {
-                        var entree = [];
-                        var plat = [];
-                        var dessert = []
-                        var price = 0;
-                        var arrayOfMealID = []
-
-                        console.log("MEAL ID --> " + mealID[i])
-                        arrayOfMealID = mealID[i].split(',')
-
-                        arrayOfMealID.map(id => {
-
-                            dataMeal.map(m => {
-
-                                if (m.id == id) {
-                                    price += m.price;
-                                    switch (m.plat) {
-                                        case 0: {
-
-
-                                            entree.push(m.name);
-
-                                            break;
-                                        }
-                                        case 1: {
-
-                                            plat.push(m.name);
-
-                                            break;
-                                        }
-                                        case 2: {
-
-                                            dessert.push(m.name);
-
-                                            break;
-                                        }
-
-
-                                    }
-                                }
-
-                            })
-
-                        })
-
-
-                        json.push({
-                            "nb_users": nbUser[i],
-                            "schedule": schedule[i],
-                            "entree": entree,
-                            "plat": plat,
-                            "dessert": dessert,
-                            "price": price
-                        })
-                        console.log("ENTREE : " + entree)
-                        console.log("PLAT : " + plat)
-                        console.log("DESSSERT : " + dessert)
-
-
-                    }
-
-
-                    res.status(200)
-                    res.json(json)
-                    res.end()
-
-                    //
-
-
-                })
-                .catch(function (err) {
-                    console.error(err)
-                });
-
-
+            command = true
+            _dataCommand = dataCommand
+            returnReponse()
         })
 
         .catch(function (err) {
             console.error(err)
         });
+
+    db.any('select name,plat,id,price from meals WHERE restaurant_id=1')
+        .then(function (dataMeal) {
+            _dataMeal = dataMeal
+            plat = true
+            returnReponse()
+        })
+        .catch(function (err) {
+            console.error(err)
+        });
+
+    db.any('select * from menu').then(dataMenu => {
+        menu = true;
+        _dataMenu = dataMenu
+        returnReponse()
+    }).catch(function (err) {
+        console.error(err)
+    });
+
+    function returnReponse() {
+            if (plat && menu && command) {
+            let bookingID = []
+            let booking = []
+
+            _dataCommand.map(command => {
+
+                if (bookingID.indexOf(command.id) === -1) {
+                    console.log("Je valide la condition")
+                    let mealId = []
+                    let menu = []
+                    let nbUsers
+                    let schedule
+
+
+                    bookingID.push(command.id)
+                    if (command.meal_id != null)
+                        for (let i = 0; i < command.meal_id.length; i++) {
+                            mealId.push(command.meal_id[i])
+                        }
+
+                    if (command.menu != null)
+                            menu.push(command.menu)
+
+
+                    nbUsers = command.nb_users
+                    schedule = command.schedule
+
+                    _dataCommand.map(c => {
+
+                        if (command !== c && command.id === c.id) {
+                            if (c.meal_id != null) {
+                                for (let i = 0; i < c.meal_id.length; i++) {
+                                    mealId.push(c.meal_id[i])
+                                }
+
+                            }
+                            if (c.menu != null) {
+
+                                    menu.push(c.menu)
+
+
+                            }
+
+                        }
+
+                    })
+                    let json = {
+                        id: command.id,
+                        nb_users: nbUsers,
+                        schedule: schedule,
+                        meal_id: mealId,
+                        menu: menu
+                    }
+
+                    booking.push(json)
+
+                }
+
+                else
+                    console.log("JE VALIDE PAS !!!")
+            })
+
+                console.log("BOOKING --> "+JSON.stringify(booking))
+                console.log("MEAL --> "+JSON.stringify(_dataMeal))
+
+
+            res.status(200)
+            res.json({
+                booking:booking,
+                meal:_dataMeal,
+                menu:_dataMenu
+            })
+            res.end()
+        }
+    }
 }
 
 function getSingleBooking(req, res, next) {
@@ -177,9 +156,8 @@ function getSingleBooking(req, res, next) {
 function createBooking(req, res, next) {
 
 
-
-    console.log("PRICE --> "+req.body.total)
-    console.log("MENU --> "+req.body.menu)
+    console.log("PRICE --> " + req.body.total)
+    console.log("MENU --> " + req.body.menu)
 
 
     db.one('select * from code WHERE free=true limit 1').then(result => {
@@ -202,7 +180,7 @@ function createBooking(req, res, next) {
         console.error("ERROR IN SELECT CODE " + err)
     });
 
-    console.log("MEAL ID -->"+ req.body.meal_id)
+    console.log("MEAL ID -->" + req.body.meal_id)
 
 
     function insertBookingWithCode(idCode) {
@@ -211,7 +189,7 @@ function createBooking(req, res, next) {
             [req.body.master_user_id, req.body.restaurant_id, req.body.nb_users, req.body.schedule, req.body.date, req.body.update_date, idCode])
             .then(function (result) {
                 db.none('insert into command(user_id, booking_id, meal_id, payment_id, created_date, updated_date,price, menu)' +
-                    'values($1,$2,$3,$4,$5,$6,$7,$8)', [req.body.master_user_id, result.id, req.body.meal_id, 2, req.body.date, null,req.body.total,req.body.menu]
+                    'values($1,$2,$3,$4,$5,$6,$7,$8)', [req.body.master_user_id, result.id, req.body.meal_id, 2, req.body.date, null, req.body.total, req.body.menu]
                 ).then(() => {
                     console.log("Normalement tout est good")
                 })
@@ -266,29 +244,26 @@ function removeBooking(req, res, next) {
 function getAllCommands(req, res, next) {
 
 
-
-    if(req.query.iduser)
-    {
+    if (req.query.iduser) {
 
 
-        let restaurantID=[]
+        let restaurantID = []
 
         db.any('SELECT command.price,command.id,command.meal_id,command.menu, booking.created_date, booking.id AS bookingid,booking.restaurant_id,booking.nb_users,booking.schedule, booking.created_date\n' +
             'FROM command\n' +
             'INNER JOIN booking \n' +
             'ON command.booking_id = booking.id\n' +
-            'WHERE command.user_id=$1 ORDER BY command.id DESC' , req.query.iduser)
+            'WHERE command.user_id=$1 ORDER BY command.id DESC', req.query.iduser)
 
             .then(function (data) {
 
-                console.log("LA DATE IS HERE "+JSON.stringify(data))
+                console.log("LA DATE IS HERE " + JSON.stringify(data))
 
 
                 data.map(command => {
 
                     if (restaurantID.indexOf(command.restaurant_id) === -1)
                         restaurantID.push(command.restaurant_id)
-
 
 
                 })
@@ -301,14 +276,12 @@ function getAllCommands(req, res, next) {
                     .then(function (data2) {
 
 
-
-
                         res.status(200)
                             .json({
                                 status: 'success',
                                 data: {
-                                    booking:data,
-                                    infoResto:data2
+                                    booking: data,
+                                    infoResto: data2
                                 },
                                 message: 'Retrieved ALL Commands for specific user'
                             });
@@ -323,24 +296,23 @@ function getAllCommands(req, res, next) {
             })
             .catch(function (err) {
 
-                console.log("ERR SQL IN GET ALL COMMAND wWITH PaRAM --> "+err);
+                console.log("ERR SQL IN GET ALL COMMAND wWITH PaRAM --> " + err);
             });
     }
 
-    else
-    {
-    db.any('select * from command')
-        .then(function (data) {
-            res.status(200)
-                .json({
-                    status: 'success',
-                    data: data,
-                    message: 'Retrieved ALL Commands'
-                });
-        })
-        .catch(function (err) {
-            return next(err);
-        });
+    else {
+        db.any('select * from command')
+            .then(function (data) {
+                res.status(200)
+                    .json({
+                        status: 'success',
+                        data: data,
+                        message: 'Retrieved ALL Commands'
+                    });
+            })
+            .catch(function (err) {
+                return next(err);
+            });
     }
 }
 
@@ -440,7 +412,7 @@ function getAllMeals(req, res, next) {
     db.any('select *' +
         ' from menu where id_restaurant=$1 ', req.query.id)
         .then(function (data) {
-            menus=data
+            menus = data
             if (meals.length > 0)
                 sendResponse()
 
@@ -455,7 +427,7 @@ function getAllMeals(req, res, next) {
         res.status(200)
             .json({
                 status: 'success',
-                data:[{menu: menus,meal:meals}],
+                data: [{menu: menus, meal: meals}],
                 message: 'Retrieved ALL meals'
             });
     }
@@ -676,7 +648,7 @@ function getSingleRestaurant(req, res, next) {
                 console.log("JE retourne bien le bon bail")
             })
             .catch(function (err) {
-               console.log("ERROR iN GET SiGLE RESTO --> "+err)
+                console.log("ERROR iN GET SiGLE RESTO --> " + err)
             });
     }
 
@@ -757,15 +729,13 @@ function removeRestaurant(req, res, next) {
         });
 }
 
-function getSingleCode(req,res,next)
-{
+function getSingleCode(req, res, next) {
     console.log(req.params.id)
     console.log(req.query.booking)
 
     //FIND CODE STRING WITH ID BOOKiNG
 
-    if(req.params.id && req.query.booking)
-    {
+    if (req.params.id && req.query.booking) {
         db.one('SELECT code.name ' +
             'FROM CODE ' +
             'INNER JOIN booking ' +
