@@ -17,6 +17,9 @@ pgp.pg.defaults.ssl = true;
 
 function getAllBookings(req, res, next) {
 
+    console.log("JE PASSE BIEN LA")
+    console.log("QUERY DATE --> "+req.query.date)
+
     var command = false
     var plat = false
     var menu = false
@@ -32,6 +35,7 @@ function getAllBookings(req, res, next) {
         'WHERE booking.restaurant_id=1 '
     )
         .then(function (dataCommand) {
+            console.log("JSON COMMAND --> "+JSON.stringify(dataCommand))
             command = true
             _dataCommand = dataCommand
             returnReponse()
@@ -67,7 +71,7 @@ function getAllBookings(req, res, next) {
             _dataCommand.map(command => {
 
                 if (bookingID.indexOf(command.id) === -1) {
-                    console.log("Je valide la condition")
+
                     let mealId = []
                     let menu = []
                     let nbUsers
@@ -118,12 +122,7 @@ function getAllBookings(req, res, next) {
 
                 }
 
-                else
-                    console.log("JE VALIDE PAS !!!")
-            })
-
-                console.log("BOOKING --> "+JSON.stringify(booking))
-                console.log("MEAL --> "+JSON.stringify(_dataMeal))
+                })
 
 
             res.status(200)
