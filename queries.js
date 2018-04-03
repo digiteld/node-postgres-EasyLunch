@@ -18,7 +18,14 @@ pgp.pg.defaults.ssl = true;
 function getAllBookings(req, res, next) {
 
     console.log("JE PASSE BIEN LA")
-    console.log("QUERY DATE --> "+req.query.date)
+
+    let date = new Date
+    let date2 = new Date
+    date.setHours(1)
+    date2.setHours(23)
+    date.setMinutes(0)
+    date2.setMinutes(0)
+
 
     var command = false
     var plat = false
@@ -28,22 +35,26 @@ function getAllBookings(req, res, next) {
     var _dataMenu
 
     db.any('\n' +
-        'SELECT command.meal_id,command.menu, booking.id, booking.nb_users, booking.schedule\n' +
-        'FROM command\n' +
-        'JOIN booking\n' +
-        'ON booking_id=booking.id\n' +
-        'WHERE booking.restaurant_id=1 '
+        'SELECT command.meal_id,command.menu, booking.id, booking.nb_users, booking.schedule,code.name \n' +
+        'FROM command \n' +
+        'JOIN booking \n' +
+        'ON booking_id=booking.id \n' +
+        'JOIN code \n'+
+        'ON booking.code=code.id \n'+
+        'WHERE booking.restaurant_id=1 AND booking.created_date>$1 AND booking.created_date<$2', [date, date2]
     )
         .then(function (dataCommand) {
-            console.log("JSON COMMAND --> "+JSON.stringify(dataCommand))
+            console.log("JSON COMMAND --> " + JSON.stringify(dataCommand))
             command = true
             _dataCommand = dataCommand
             returnReponse()
         })
 
         .catch(function (err) {
-            console.error(err)
+            console.error("ERR 1 --> "+err)
         });
+
+
 
     db.any('select name,plat,id,price from meals WHERE restaurant_id=1')
         .then(function (dataMeal) {
@@ -64,11 +75,12 @@ function getAllBookings(req, res, next) {
     });
 
     function returnReponse() {
-            if (plat && menu && command) {
+        if (plat && menu && command) {
             let bookingID = []
             let booking = []
 
             _dataCommand.map(command => {
+
 
                 if (bookingID.indexOf(command.id) === -1) {
 
@@ -78,6 +90,7 @@ function getAllBookings(req, res, next) {
                     let schedule
 
 
+
                     bookingID.push(command.id)
                     if (command.meal_id != null)
                         for (let i = 0; i < command.meal_id.length; i++) {
@@ -85,51 +98,44 @@ function getAllBookings(req, res, next) {
                         }
 
                     if (command.menu != null)
-                            menu.push(command.menu)
+                        menu.push(command.menu)
 
 
                     nbUsers = command.nb_users
                     schedule = command.schedule
-
+                    nbJoiner=1
                     _dataCommand.map(c => {
 
                         if (command !== c && command.id === c.id) {
+                            nbJoiner+=1
                             if (c.meal_id != null) {
                                 for (let i = 0; i < c.meal_id.length; i++) {
                                     mealId.push(c.meal_id[i])
                                 }
-
                             }
                             if (c.menu != null) {
-
-                                    menu.push(c.menu)
-
-
+                                menu.push(c.menu)
                             }
-
                         }
-
                     })
+
                     let json = {
                         id: command.id,
                         nb_users: nbUsers,
                         schedule: schedule,
                         meal_id: mealId,
-                        menu: menu
+                        menu: menu,
+                        participant:nbJoiner,
+                        code:command.name
                     }
-
                     booking.push(json)
-
                 }
-
-                })
-
-
+            })
             res.status(200)
             res.json({
-                booking:booking,
-                meal:_dataMeal,
-                menu:_dataMenu
+                booking: booking,
+                meal: _dataMeal,
+                menu: _dataMenu
             })
             res.end()
         }
